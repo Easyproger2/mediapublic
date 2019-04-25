@@ -1,0 +1,249 @@
+:host {
+  height: 100%
+}
+
+.edit-zone {
+  z-index: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.box {
+  border: 0.5px dashed black;
+  opacity: 0.7;
+  width: 100px;
+  height: 100px;
+  position: absolute;
+
+}
+
+.example-viewport {
+  height: 200px;
+  width: 200px;
+  border: 1px solid black;
+}
+
+.example-item {
+  height: 150px;
+}
+
+.preview-collection-drag {
+  border-radius: 4.0pt;
+  background-color: #303030;
+  border: 0.5px solid #606060;
+  -webkit-box-shadow: 0 1pt 18pt 2pt rgba(0,0,0,0.2);
+  -moz-box-shadow: 0 1pt 18pt 2pt rgba(0,0,0,0.2);
+  box-shadow: 0 1pt 18pt 2pt rgba(0,0,0,0.2);
+}
+
+/deep/ .library-popover  .mat-form-field-appearance-legacy .mat-form-field-label {
+  top: 0 !important;
+  position: relative !important;
+}
+
+/deep/ .library-popover .mat-input-element {
+  caret-color: black !important;
+}
+
+/deep/ .library-popover .mat-form-field-infix {
+  padding: 0 !important;
+  margin: 0 !important;
+  border-top: 0 solid transparent !important;
+}
+
+/deep/ .library-popover .mat-form-field-appearance-legacy .mat-form-field-label {
+  color: gray !important;
+}
+
+/deep/ .library-popover .mat-form-field-appearance-legacy .mat-form-field-underline {
+  background-color: black !important;
+  visibility: hidden !important;
+}
+
+/deep/ .library-popover .mat-form-field-appearance-legacy .mat-form-field-wrapper {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/deep/.template-panels .mat-tab-label,
+/deep/.template-panels .mat-tab-label-active {
+  min-width: 0!important;
+  padding: 3px!important;
+  margin: 3px!important;
+}
+
+.box-selected {
+  background: #73c1f230;
+}
+
+
+.locked-box {
+  pointer-events: none;
+  z-index: 0 !important;
+}
+
+.box:active {
+  opacity: 0.5;
+  -webkit-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  -moz-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+}
+
+.flip-layer-active {
+  background-color: #3f87cb10;
+}
+.vertical-line-straighten {
+  opacity: 0.0;
+  position: absolute;
+  z-index: 100000;
+  border: 0.5px dashed #3676b8;
+  height: 0.5px;
+}
+
+.horizontal-line-straighten {
+  opacity: 0.0;
+  position: absolute;
+  z-index: 100000;
+  border: 0.5px dashed #3676b8;
+  height: 0.5px;
+}
+
+.library-show-button {
+  cursor: pointer;
+  position: relative;
+  background-image: url("../../assets/images/library-icon.png");
+  width: 14px;
+  height: 14px;
+  background-size: 14px 14px;
+}
+
+.connected-modifier-box {
+  border-radius:2.7pt;
+  border: 1px solid gray;
+}
+
+.collection-row {
+  border: 1px solid transparent;
+}
+
+
+.ready-drop-edit-zone {
+  background-color: #b2bec850;
+}
+
+
+.collection-row-header-collection {
+  border: 1px solid transparent;
+}
+.collection-row-active {
+  background-color: #73c1f230;
+  border: 1px solid #73c1f2;
+}
+
+.collection-row:active {
+  background-color: #73c1f230;
+  border: 1px solid #73c1f2;
+}
+
+.library-popover {
+  overflow: hidden;
+  width: 430px;
+  height: 500px;
+  top: 0;
+  left: 0;
+  cursor: move;
+  position: absolute;
+  background: #bdbebf;
+  color: black;
+  border: 0.5px solid gray;
+
+  z-index: 10000;
+  -webkit-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  -moz-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+}
+
+.library-popup-closed {
+  visibility: hidden;
+}
+
+
+
+
+.layer-list {
+  font-size: 11px;
+
+  width: 500px;
+  max-width: 100%;
+
+  min-height: 60px;
+  display: block;
+  background: #313234;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.layer-box {
+  padding: 10px;
+  border-bottom: solid 0.5px #555;
+  color:rgba(255, 255, 255, .7);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  cursor: move;
+  background: #313234;
+  font-size: 14px;
+}
+
+.layer-box-active {
+  background: #73c1f230;
+}
+
+.layer-box-locked {
+  background: #555;
+}
+
+
+.object-in-edit-zone {
+
+}
+
+.object-in-edit-zone-active {
+  background: #73c1f230;
+}
+
+.edit-zone-hidden {
+  visibility: hidden;
+}
+
+
+
+
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 4px;
+  -webkit-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  -moz-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.5;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.layer-box:last-child {
+  border: none;
+}
+
+.layer-list.cdk-drop-list-dragging .layer-box:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+

@@ -1,0 +1,125 @@
+/* You can add global styles to this file, and also import other style files */
+@import "~@angular/material/prebuilt-themes/purple-green.css";
+
+@import "assets/scss/main-theme";
+@import "~ngx-drag-to-select/scss/ngx-drag-to-select";
+@import "~wfk-montserrat/montserrat";
+html {
+  width: 100%;
+  height: 100%;
+}
+body {
+  color:white;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select:none;
+  user-select:none;
+  font-family: 'montserrat-regular', sans-serif;
+  background-color: #252424;
+  min-width: 100%;
+  min-height: 100%;
+}
+app-root {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+@mixin background-2x($path, $ext: "png", $w: auto, $h: auto, $pos: left top, $repeat: no-repeat) {
+
+  $at1x_path: "#{$path}.#{$ext}";
+  $at2x_path: "#{$path}@2x.#{$ext}";
+
+  background-image: url("#{$at1x_path}");
+  background-size: $w $h;
+  background-position: $pos;
+  background-repeat: $repeat;
+
+  @media all and (-webkit-min-device-pixel-ratio : 1.5),
+  all and (-o-min-device-pixel-ratio: 3/2),
+  all and (min--moz-device-pixel-ratio: 1.5),
+  all and (min-device-pixel-ratio: 1.5) {
+    background-image: url("#{$at2x_path}");
+  }
+}
+
+
+.connect-modifier-popover {
+
+
+  border: .5px solid #757575;
+  background-color: #393a3a;
+  border-radius:6.7pt;
+  -webkit-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  -moz-box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+  box-shadow: 0 1pt 11pt 1pt rgba(0,0,0,0.2);
+}
+
+.connect-modifier-popover .popover-body {
+  font-size: 11px;
+  color:rgba(255, 255, 255, .7);
+}
+
+
+.connect-modifier-popover .arrow::after {
+  border-left-color:  #393a3a;
+}
+
+.right-panel-show-button {
+  cursor: pointer;
+  position: relative;
+  background-image: url("assets/images/right-panel.png");
+  width: 18px;
+  height: 14px;
+  background-size: 18px 14px;
+}
+
+.right-panel-show-button-active {
+  background-image: url("assets/images/right-panel-active.png");
+}
+
+
+
+.left-panel-show-button {
+  cursor: pointer;
+  position: relative;
+  background-image: url("assets/images/left-panel.png");
+  width: 18px;
+  height: 14px;
+  background-size: 18px 14px;
+}
+
+.left-panel-show-button-active {
+  background-image: url("assets/images/left-panel-active.png");
+}
+
+.title {
+  font-family: 'montserrat-extra-bold', sans-serif;
+  font-size: 25pt;
+}
+.rounded-small {
+  border-radius:6.7pt;
+}
+.back-first-color {
+  background-color: #252424;
+}
+.back-second-color {
+  background-color: #404040;
+}
+.back-third-color {
+  background-color: #383736;
+}
+
+.back-panels-color {
+  background-color: #313234;
+}
+
+.shadow {
+  -webkit-box-shadow: 0 1pt 18pt 2pt rgba(0,0,0,0.2);
+  -moz-box-shadow: 0 1pt 18pt 2pt rgba(0,0,0,0.2);
+  box-shadow: 0 1pt 18pt 2pt rgba(0,0,0,0.2);
+}

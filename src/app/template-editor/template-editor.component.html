@@ -1,0 +1,901 @@
+<ngx-alerts></ngx-alerts>
+<ngx-loading [show]="loading"></ngx-loading>
+
+<ng-template let-popover="popover"
+             let-style="style"
+             let-modifiersList="modifiersList"
+             let-modifier="modifier"
+             let-isNew="isNew"
+             let-modifierStyleName="modifierStyleName"
+             #connectOrEditModifierPopover>
+	<div *ngIf="isNew">Подключение модификатора</div>
+	<div *ngIf="!isNew">
+		{{modifiersList[modifier.ID].name}} к свойству: {{modifierStyleName}}
+	</div>
+
+	<div style="margin-top: 10px;"></div>
+
+	<mat-form-field *ngIf="isNew" style="width: 100%">
+		<mat-label>Модификатор</mat-label>
+		<select matNativeControl required #modifierID="ngModel" [(ngModel)]="modifier.ID">
+			<option [value]=0>-- select modifier --</option>
+			<option *ngFor="let modifier of modifiersList | keyvalue"
+			        [value]="modifier.key" >{{modifier.value.name}}</option>
+		</select>
+	</mat-form-field>
+	<mat-form-field style="width: 100%" floatLabel="always">
+		<input type="text" autocomplete="off" required #modifierMin="ngModel"
+		       pattern="(^|\s|-)\d*\.?\d+\s*"
+		       (keydown)="popoverModifierKeyDown($event, acceptModifierButton.disabled, modifier, style, popover, isNew)"
+		       [(ngModel)]="modifier.minTMP" matInput placeholder="Modifier min">
+	</mat-form-field>
+	<mat-form-field style="width: 100%" floatLabel="always">
+		<input type="text" autocomplete="off" required #modifierMax="ngModel" pattern="(^|\s|-)\d*\.?\d+\s*"
+		       (keydown)="popoverModifierKeyDown($event, acceptModifierButton.disabled, modifier, style, popover, isNew)"
+		       [(ngModel)]="modifier.maxTMP" matInput placeholder="Modifier max">
+	</mat-form-field>
+	<mat-form-field style="width: 100%" floatLabel="always">
+		<input type="text" autocomplete="off" required #modifierMinAttr="ngModel" pattern="(^|\s|-)\d*\.?\d+\s*"
+		       (keydown)="popoverModifierKeyDown($event, acceptModifierButton.disabled, modifier, style, popover, isNew)"
+		       [(ngModel)]="modifier.minAttrTMP" matInput placeholder="Attribute min">
+	</mat-form-field>
+	<mat-form-field style="width: 100%" floatLabel="always">
+		<input type="text" autocomplete="off" required #modifierMaxAttr="ngModel" pattern="(^|\s|-)\d*\.?\d+\s*"
+		       (keydown)="popoverModifierKeyDown($event, acceptModifierButton.disabled, modifier, style, popover, isNew)"
+		       [(ngModel)]="modifier.maxAttrTMP" matInput placeholder="Attribute max">
+	</mat-form-field>
+
+	<div fxLayout="row" fxLayoutAlign="center center">
+		<button #acceptModifierButton  mat-button
+		        [disabled]="
+		modifier.ID === 0 ||
+		modifierMin.invalid ||
+		modifierMax.invalid ||
+		modifierMinAttr.invalid ||
+		modifierMaxAttr.invalid"
+		        (click)="popoverModifierAction(modifier, style, popover, isNew)">
+			<span *ngIf="isNew">add modifier</span>
+			<span *ngIf="!isNew">apply modifier</span>
+		</button>
+
+		<button *ngIf="!isNew" mat-button
+		        (click)="deleteModifier(modifier, popover, modifierStyleName)">
+			delete modifier
+		</button>
+	</div>
+</ng-template>
+<ng-template let-popover="popover"
+             let-attributesNotExist="attributesNotExist"
+             let-attributeSelected="attributeSelected"
+             let-style="style"
+             let-isNew="isNew"
+             let-isHaveParent="isHaveParent"
+
+	#addNewStylePopover>
+	<div *ngIf="isNew">Добавление свойства</div>
+	<div *ngIf="!isNew">Редактирование свойства: {{attributeSelected}}</div>
+
+	<div style="margin-top: 10px;"></div>
+
+	<mat-form-field *ngIf="isNew" style="width: 100%">
+		<mat-label>Модификатор</mat-label>
+		<select matNativeControl required #attributeID="ngModel" [(ngModel)]="attributeSelected">
+			<option [value]=0>-- select style --</option>
+			<option *ngFor="let attribute of attributesNotExist | keyvalue"
+			        [value]="attribute.key" >{{attribute.value.name}}</option>
+		</select>
+	</mat-form-field>
+
+
+	<div *ngIf="attributeSelected !== 0">
+		<mat-form-field *ngIf="attributesNotExist[attributeSelected].form.type === 'input'" floatLabel="always" style="width: 100%;">
+			<input type="text"
+			       autocomplete="off"
+			       (keydown)="popoverStyleKeyDown($event, attributesNotExist[attributeSelected], popover, attributeSelected === 0, isNew)"
+			       [(ngModel)]="attributesNotExist[attributeSelected].valueTMP"
+			       matInput
+			       [placeholder]="attributesNotExist[attributeSelected].form.tooltip">
+		</mat-form-field>
+
+		<mat-form-field *ngIf="attributesNotExist[attributeSelected].form.type === 'select'" style="width: 100%;">
+			<mat-label>{{attributesNotExist[attributeSelected].form.tooltip}}</mat-label>
+			<select matNativeControl required [(ngModel)]="attributesNotExist[attributeSelected].valueTMP">
+				<option *ngFor="let variable of attributesNotExist[attributeSelected].form.variables" [value]="variable.name" >{{variable.tooltip}}</option>
+			</select>
+		</mat-form-field>
+
+		<mat-checkbox [(ngModel)]="attributesNotExist[attributeSelected].scaled_flagTMP">Может быть скалировано</mat-checkbox>
+	</div>
+
+
+
+
+	<div fxLayout="row wrap" fxLayoutGap="32px" fxLayoutAlign="flex-start">
+		<button [disabled]="attributeSelected === 0"
+				(click)="popoverStyleAction(attributesNotExist[attributeSelected], popover, isNew)"
+				mat-button>
+			<span *ngIf="isNew">add style</span>
+			<span *ngIf="!isNew">apply style</span>
+		</button>
+
+		<button *ngIf="!isNew" mat-button
+		        (click)="deleteStyle(attributeSelected, popover)">
+			<span *ngIf="isHaveParent">set parent</span>
+			<span *ngIf="!isHaveParent">delete style</span>
+
+		</button>
+	</div>
+
+
+</ng-template>
+
+<div *ngIf="frameCollectionCanMove"
+     appCollectionDragFrame
+     [dropZone]="editZone"
+     [startMove]="collectionDrag.e"
+     (hitDropZone)="collectionElementMove($event)"
+     (dropCollection)="dropCollection()"
+     [frameCollectionCanMove]="frameCollectionCanMove"
+     (frameStopMove)="stopDragCollection()"
+     style="z-index:10001;position:absolute;top:0;left:0">
+	<div *ngIf="collectionDrag.readyDrop"
+	     style="transform: perspective(1px) translateY(-50%) translateX(-50%);">
+		<div
+		     fxLayout="row wrap"
+		     fxLayoutGap="30px"
+		     fxLayout.lt-sm="column"
+		     fxLayoutAlign="flex-start"
+		     style="margin-left:30px;"
+		     [ngStyle] = "getStyleReadyDropFrameCollection(collectionDrag.f.length,widthNewObject)">
+			<div *ngFor = "let field of collectionDrag.f; let index = index"
+			     id="object-dragable-{{index}}"
+			     #objectDragPreviewElement="objectDragPreview"
+			     [appObjectDragPreviewElement]="field"
+			     fxFlex="0 1 calc(20% - 30px)"
+			     fxFlex.lt-md="0 1 calc(20% - 30px)"
+			     fxFlex.lt-sm="100%">
+				<div class="preview-collection-drag"
+				     style="padding: 15px 10px;width:200px;height:200px;font-size: 11px;color:rgba(255, 255, 255, .7);margin-top: 5px;">
+					<div style="margin-left: 10px;">
+						{{field.name}}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div style="padding: 15px 10px;color: rgba(255, 255, 255, .7);" class="preview-collection-drag" *ngIf="!collectionDrag.readyDrop">
+		<div style="font-size: 12px;">
+			{{collectionDrag.v.baseName}}
+		</div>
+		<div style="margin-top: 10px;">
+			<div
+					*ngFor="let field of collectionDrag.f"
+					fxLayout="row"
+					fxLayoutAlign="start center"
+					style="font-size: 11px;color:rgba(255, 255, 255, .7);margin-top: 5px;">
+				<mat-icon style="color: #73c1f280;">blur_circular</mat-icon>
+				<div style="margin-left: 10px;">
+					{{field.name}}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div *ngIf="libraryOpened" #libraryObjects [ngStyle]="getLibraryObjectsStyle()" cdkDrag (clickOutside)="closeLibrary($event)" class="library-popover" style="border-radius: 4pt">
+	<div fxLayout="column" fxLayoutAlign="center  center" style="height: 50px;">
+		<div fxLayout="row" fxLayoutAlign="center center" style="height: 40px;">
+			<mat-icon style="margin-left: 10px; font-size:25px;">search</mat-icon>
+
+			<mat-form-field floatLabel="never" style="margin-left: 5px;font-size:20px;color:black;width: 100%;">
+				<input [formControl]="inputFindLibraryObject" type="text" autocomplete="off" matInput placeholder="Objects">
+			</mat-form-field>
+			<button matSuffix mat-icon-button (click)="inputFindLibraryObject.setValue('')">
+				<mat-icon style="font-size:15px;">clear</mat-icon>
+			</button>
+		</div>
+	</div>
+
+	<hr style="margin-top: 0;margin-bottom: 0;border: none;background-color: rgba(0, 0, 0, .4);height: 1px;">
+
+	<cdk-virtual-scroll-viewport autosize style="width: 100%;height: 450px;">
+		<div *cdkVirtualFor="let collection of filteredLibraryCollection | keyvalue" >
+			<div #headerCollectionRef style="font-size: 12px;margin-top: 15px;" class="collection-row-header-collection">
+				<div appDragCollection
+				     class="collection-row"
+				     [headerCollectionRef]="headerCollectionRef"
+				     (startDeltaDrag)="startDragCollection({r: false,t: 0, v: collection.value, e: $event, f: collection.value.fields})">
+					<span style="margin-left: 10px;margin-right: 5px;">{{collection.value.baseName}}</span>
+				</div>
+
+				<div appDragCollection
+				     class="collection-row"
+				     (startDeltaDrag)="startDragCollection({r: false,t: 1, v: collection.value, e: $event, f: [field]})"
+				     *ngFor="let field of collection.value.fields"
+				     style="color: #303030;font-size: 11px;margin-top: 5px;">
+
+					<div style="margin-left: 20px;margin-right: 15px;" fxLayout="row" fxLayoutAlign="start center">
+						<mat-icon >blur_circular</mat-icon>
+						<div style="margin-left: 10px;">
+							{{field.name}}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<hr style="margin-top: 5px;margin-bottom: 5px;border: none;background-color: rgba(0, 0, 0, .1);height: 1px;">
+		</div>
+	</cdk-virtual-scroll-viewport>
+</div>
+
+<mat-drawer-container class="back-first-color" autosize [hasBackdrop]="false" style="width: 100%;height: 100%">
+
+	<mat-drawer #rightPanel mode="side" position="end" class="back-panels-color shadow" style="height: 100%">
+		<div  style="margin: 20px;width: 320px" class="template-panels">
+
+			<mat-tab-group [selectedIndex]="selectedTabRightPanel"
+			               (selectedIndexChange)="selectedTabRightPanel = $event">
+
+				<mat-tab [disabled]="objectInfo=== null">
+					<ng-template mat-tab-label>
+						<mat-icon>style  </mat-icon>
+					</ng-template>
+
+					<div *ngIf="objectInfo=== null" style="margin-top: 20px;">
+						Выберите объект
+					</div>
+
+					<div *ngIf="objectInfo !== null" class="tab-content" style="margin-top: 20px;">
+						<div>
+							<mat-icon
+									triggers="manual"
+									autoClose="outside"
+									container="body"
+									[ngbPopover]="addNewStylePopover"
+									popoverClass="connect-modifier-popover"
+									#pAddStylePopover="ngbPopover"
+									placement="left"
+									(click)="addNewStyleShow(pAddStylePopover)"
+									style="width:10px;height:10px;font-size: 10px;cursor: pointer">
+								add
+							</mat-icon>
+							Свойства
+						</div>
+						<div style="margin-top: 20px;font-size: 14px" fxLayout="row" fxLayoutAlign="center center">
+
+							<div fxLayout="column" fxLayoutAlign="center end" style="font-size: 11px; color:rgba(255, 255, 255, .7) ">
+								<div *ngFor="let style of objectInfo.styles[objectInfo.styleID] | keyvalue" fxLayout="row" fxLayoutAlign="start start">
+
+									<div fxLayout="row" fxLayoutAlign="center center">
+										<div style="width: 10px">
+											<mat-icon
+													triggers="manual"
+													autoClose="outside"
+													container="body"
+													[ngbPopover]="connectOrEditModifierPopover"
+													popoverClass="connect-modifier-popover"
+													#pConnectModifierPopover="ngbPopover"
+													placement="left"
+													(click)="connectModifierShow(pConnectModifierPopover, style.value, style.key)"
+													*ngIf="style.value.scaled_flag"
+													style="width:10px;height:10px;font-size: 10px;cursor: pointer">
+												add
+											</mat-icon>
+										</div>
+										<div style="width: 110px" fxLayout="row" fxLayoutAlign="end center">
+											<div triggers="manual"
+											     autoClose="outside"
+											     container="body"
+											     [ngbPopover]="addNewStylePopover"
+											     popoverClass="connect-modifier-popover"
+											     #pEditStylePopover="ngbPopover"
+											     placement="left"
+											     (dblclick)="editStyleShow(pEditStylePopover, style.key)"
+											     style="cursor: pointer"
+											>{{style.value.form.label}}</div>
+										</div>
+										<div style="margin-left: 5px;width: 180px;">
+											<mat-form-field *ngIf="style.value.form.type === 'input'" floatLabel="always" style="width: 100%;" class="input" >
+												<input
+														type="text"
+														autocomplete="off"
+														[(ngModel)]="style.value.value"
+														matInput
+														[placeholder]="style.value.form.tooltip"
+														(blur)="refreshStyleByUserEdit($event, style.value)"
+														(keydown)="inputStyleEnterPress($event, style.value)">
+											</mat-form-field>
+
+											<mat-form-field *ngIf="style.value.form.type === 'select'">
+												<mat-label>{{style.value.form.tooltip}}</mat-label>
+												<mat-select (selectionChange)="refreshStyleByUserEdit($event, style.value)" required [(value)]="style.value.value">
+													<mat-option *ngFor="let variable of style.value.form.variables" [value]="variable.name" >{{variable.tooltip}}</mat-option>
+												</mat-select>
+											</mat-form-field>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div>
+							</div>
+						</div>
+						<div *ngIf="objectInfo.formattedModifiers">
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+							<div>Подключенные модификаторы</div>
+							<div style="margin-top: 20px;font-size: 14px" >
+								<div *ngFor="let modifier of objectInfo.formattedModifiers | keyvalue" style="margin: 5px">
+									<div style="font-size: 12px;margin-top: 10px">{{modifiersList[modifier.key].name}}</div>
+									<div *ngFor="let modifierStyle of modifier.value | keyvalue">
+										<div triggers="manual"
+										     autoClose="outside"
+										     container="body"
+										     [ngbPopover]="connectOrEditModifierPopover"
+										     popoverClass="connect-modifier-popover"
+										     #pEditModifierPopover="ngbPopover"
+										     placement="left"
+										     (dblclick)="editModifierShow(pEditModifierPopover, modifierStyle.value, modifierStyle.key)"
+
+												class="connected-modifier-box" style="font-size: 11px;width: 100%;margin-top: 5px;color:rgba(255, 255, 255, .7) " >
+											<div style="margin-top: 5px;margin-bottom: 5px;" fxLayout="row" fxLayoutAlign="center center">
+												<div fxLayout="column" fxLayoutAlign="space-between end">
+													<div>Name:</div>
+													<div>Min:</div>
+													<div>Max:</div>
+													<div>Min attribute:</div>
+													<div>Max attribute:</div>
+												</div>
+												<div style="margin-left: 5px;">
+													<div>{{modifierStyle.key}}</div>
+													<div>{{modifierStyle.value.min}}</div>
+													<div>{{modifierStyle.value.max}}</div>
+													<div>{{modifierStyle.value.minAttr}}</div>
+													<div>{{modifierStyle.value.maxAttr}}
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</mat-tab>
+
+				<mat-tab [disabled]="objectInfo=== null">
+					<ng-template mat-tab-label>
+						<mat-icon>settings</mat-icon>
+					</ng-template>
+
+					<div *ngIf="objectInfo=== null" style="margin-top: 20px;">
+						Выберите объект
+					</div>
+
+
+					<div *ngIf="objectInfo !== null" class="tab-content" style="margin-top: 20px;">
+						<div>
+							Настройки
+						</div>
+						<div style="margin-top: 20px;font-size: 14px" >
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Автовыравнивание объектов при движении</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+								<mat-slide-toggle
+										[(ngModel)]="objectInfo.locked"
+										[checked]="objectInfo.locked">
+									Заблокировать
+								</mat-slide-toggle>
+							</div>
+
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Оси движения объектов</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+
+								<div>
+									<mat-slide-toggle
+											[(ngModel)]="objectInfo.lockAxisGlobal"
+											[checked]="objectInfo.lockAxisGlobal">
+										По умолчанию
+									</mat-slide-toggle>
+								</div>
+
+								<mat-radio-group [disabled]="objectInfo.lockAxisGlobal" style="font-size: 11px; color:rgba(255, 255, 255, .7);margin-top: 15px" [(ngModel)]="objectInfo.lockAxis" fxLayout="column" fxLayoutAlign="start start">
+									<mat-radio-button value="x">
+										только по оси X
+									</mat-radio-button>
+									<mat-radio-button value="y">
+										только по оси Y
+									</mat-radio-button>
+									<mat-radio-button value="">
+										все оси
+									</mat-radio-button>
+								</mat-radio-group>
+							</div>
+						</div>
+
+						<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+						<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Передвижение объектов</div>
+						<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+
+
+							<mat-slide-toggle
+									[(ngModel)]="objectInfo.deltaToDragGlobal"
+									[checked]="objectInfo.deltaToDragGlobal">
+								По умолчанию
+							</mat-slide-toggle>
+							<div fxLayout="column" fxLayoutAlign="center start" style="margin-top:10px;font-size: 11px; color:rgba(255, 255, 255, .7)">
+								<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+									<input [disabled]="objectInfo.deltaToDragGlobal"
+									       type="text"
+									       autocomplete="off"
+									       [(ngModel)]="objectInfo.deltaToDrag"
+									       matInput
+									       placeholder="Пикселей до перемешения">
+								</mat-form-field>
+							</div>
+						</div>
+
+
+						<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+						<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Авто выравнивание объекта</div>
+						<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+
+							<mat-slide-toggle
+									[(ngModel)]="objectInfo.flipObjectsEnabledGlobal"
+									[checked]="objectInfo.flipObjectsEnabledGlobal">
+								По умолчанию
+							</mat-slide-toggle>
+
+							<div>
+								<mat-slide-toggle [disabled]="objectInfo.flipObjectsEnabledGlobal" style="margin-top: 10px"
+								                  [(ngModel)]="objectInfo.flipObjectsEnabled"
+								                  [checked]="objectInfo.flipObjectsEnabled">
+									Включить
+								</mat-slide-toggle>
+							</div>
+							<div fxLayout="column" fxLayoutAlign="center start" style="margin-top:10px;font-size: 11px; color:rgba(255, 255, 255, .7)">
+								<mat-form-field  floatLabel="always" style="width: 200px" class="input" >
+									<input [disabled]="objectInfo.flipObjectsEnabledGlobal"
+									       type="text"
+									       autocomplete="off"
+									       [(ngModel)]="objectInfo.flipObjectsForce"
+									       matInput
+									       placeholder="Сила выравнивания">
+								</mat-form-field>
+							</div>
+						</div>
+
+						<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+						<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Авто размер объекта</div>
+						<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+							<mat-slide-toggle
+									[(ngModel)]="objectInfo.flipObjectsResizeEnabledGlobal"
+									[checked]="objectInfo.flipObjectsResizeEnabledGlobal">
+								По умолчанию
+							</mat-slide-toggle>
+
+							<div>
+								<mat-slide-toggle [disabled]="objectInfo.flipObjectsResizeEnabledGlobal" style="margin-top: 10px"
+								                  [(ngModel)]="objectInfo.flipObjectsResizeEnabled"
+								                  [checked]="objectInfo.flipObjectsResizeEnabled">
+									Включить
+								</mat-slide-toggle>
+							</div>
+							<div fxLayout="column" fxLayoutAlign="center start" style="margin-top:10px;font-size: 11px; color:rgba(255, 255, 255, .7)">
+								<mat-form-field  floatLabel="always" style="width: 200px" class="input" >
+									<input [disabled]="objectInfo.flipObjectsResizeEnabledGlobal"
+									       type="text"
+									       autocomplete="off"
+									       [(ngModel)]="objectInfo.flipObjectsResizeForce"
+									       matInput
+									       placeholder="Сила выравнивания">
+								</mat-form-field>
+							</div>
+						</div>
+
+					</div>
+
+
+
+
+
+
+				</mat-tab>
+
+			</mat-tab-group>
+		</div>
+	</mat-drawer>
+
+	<mat-drawer #leftPanel mode="side" class="back-panels-color shadow" style="height: 100%">
+		<div style="margin: 20px;width: 250px;" class="template-panels">
+
+			<div style="margin-top: 20px;font-size: 11px">
+				<mat-form-field style="width: 100%;">
+					<input type="text" placeholder="Выберите шаблон" matInput
+					       [formControl]="inputFindTemplate"
+					       [matAutocomplete]="auto">
+					<button matSuffix mat-icon-button (click)="clearInputFindTemplate()">
+						<mat-icon>clear</mat-icon>
+					</button>
+					<mat-autocomplete
+							[displayWith]="getDisplayFn()"
+							autoActiveFirstOption
+							#auto="matAutocomplete"
+							(optionSelected)="selectedTemplate($event.option.value)">
+						<mat-option *ngFor="let template of filteredTemplatesCollections" [value]="template"  >
+							{{template.name}}
+						</mat-option>
+					</mat-autocomplete>
+				</mat-form-field>
+			</div>
+
+			<mat-tab-group>
+
+				<mat-tab>
+					<ng-template mat-tab-label>
+						<mat-icon class="example-tab-icon">settings</mat-icon>
+					</ng-template>
+
+					<div class="tab-content" style="margin-top: 20px;">
+						<div>
+							<div>Настройки редактора</div>
+
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Область редактирования</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+
+								<div fxLayout="column" fxLayoutAlign="center start" style="font-size: 11px; color:rgba(255, 255, 255, .7)">
+									<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+										<input
+												type="text"
+												autocomplete="off"
+												[(ngModel)]="widthEditZoneTMP"
+												matInput
+												placeholder="Ширина области редактирования"
+												(blur)="refreshEditZoneConstraintsChanged()"
+												(keydown)="inputEditZoneKeyDownConstraintsChanged($event)">
+									</mat-form-field>
+									<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+										<input
+												type="text"
+												autocomplete="off"
+												[(ngModel)]="heightEditZOneTMP"
+												matInput
+												placeholder="Высота области редактирования"
+												(blur)="refreshEditZoneConstraintsChanged()"
+												(keydown)="inputEditZoneKeyDownConstraintsChanged($event)">
+									</mat-form-field>
+								</div>
+							</div>
+
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Редактор свойств объектов</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+
+								<div fxLayout="column" fxLayoutAlign="center start" style="font-size: 11px; color:rgba(255, 255, 255, .7)">
+									<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+										<input
+												type="text"
+												autocomplete="off"
+												[(ngModel)]="widthEditTMP"
+												matInput
+												placeholder="Ширина скалирования"
+												(blur)="refreshEditZoneConstraintsChanged()"
+												(keydown)="inputEditZoneKeyDownConstraintsChanged($event)">
+									</mat-form-field>
+									<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+										<input
+												type="text"
+												autocomplete="off"
+												[(ngModel)]="heightEditTMP"
+												matInput
+												placeholder="Высота скалирования"
+												(blur)="refreshEditConstraintsChanged()"
+												(keydown)="inputEditKeyDownConstraintsChanged($event)">
+									</mat-form-field>
+								</div>
+							</div>
+
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Передвижение объектов</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+								<div fxLayout="column" fxLayoutAlign="center start" style="font-size: 11px; color:rgba(255, 255, 255, .7)">
+									<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+										<input
+												type="text"
+												autocomplete="off"
+												[(ngModel)]="deltaToDrag"
+												matInput
+												placeholder="Пикселей до перемешения">
+									</mat-form-field>
+								</div>
+							</div>
+
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Оси движения объекта</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+								<mat-radio-group style="font-size: 11px; color:rgba(255, 255, 255, .7);margin-top: 15px" [(ngModel)]="globalLockAxis" fxLayout="column" fxLayoutAlign="start start">
+									<mat-radio-button value="x">
+										только по оси X
+									</mat-radio-button>
+									<mat-radio-button value="y">
+										только по оси Y
+									</mat-radio-button>
+									<mat-radio-button value="">
+										все оси
+									</mat-radio-button>
+								</mat-radio-group>
+							</div>
+
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Авто выравнивание объекта</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+
+								<mat-slide-toggle
+										[(ngModel)]="flipObjectsEnabled"
+										[checked]="flipObjectsEnabled">
+									Включить
+								</mat-slide-toggle>
+								<div fxLayout="column" fxLayoutAlign="center start" style="margin-top:10px;font-size: 11px; color:rgba(255, 255, 255, .7)">
+									<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+										<input
+												type="text"
+												autocomplete="off"
+												[(ngModel)]="flipObjectsForce"
+												matInput
+												placeholder="Сила выравнивания">
+									</mat-form-field>
+								</div>
+							</div>
+
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+							<div style="margin-left:5px;font-size: 12px;margin-top: 15px">Авто размер объекта</div>
+							<div style="margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+								<mat-slide-toggle
+										[(ngModel)]="flipObjectsResizeEnabled"
+										[checked]="flipObjectsResizeEnabled">
+									Включить
+								</mat-slide-toggle>
+								<div fxLayout="column" fxLayoutAlign="center start" style="margin-top:10px;font-size: 11px; color:rgba(255, 255, 255, .7)">
+									<mat-form-field floatLabel="always" style="width: 200px" class="input" >
+										<input
+												type="text"
+												autocomplete="off"
+												[(ngModel)]="flipObjectsResizeForce"
+												matInput
+												placeholder="Сила выравнивания">
+									</mat-form-field>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</mat-tab>
+
+				<mat-tab [disabled]="!isSelectedTemplate()">
+					<ng-template mat-tab-label>
+						<mat-icon class="example-tab-icon">layers</mat-icon>
+					</ng-template>
+
+					<div class="tab-content" style="margin-top: 20px;">
+
+						<div *ngIf="!isSelectedTemplate()">Выберите шаблон</div>
+
+
+						<div *ngIf="isSelectedTemplate()">
+
+
+							<div >Настройки</div>
+							<div style="margin-left: 10px;margin-top: 20px;margin-right: 10px;font-size: 14px">
+
+
+								<mat-checkbox style="margin-top: 10px; font-size: 11px; color:rgba(255, 255, 255, .7);" [(ngModel)]="multiSelect">Мультиселект слоев</mat-checkbox>
+								<button mat-raised-button style="font-size: 11px; color:rgba(255, 255, 255, .7);" mat-button (click)="clearSelection()">
+									сбросить выбор слоя
+								</button>
+							</div>
+
+							<hr style="border: none;color: rgba(255, 255, 255, .3);background-color: rgba(255, 255, 255, .1);height: 1px;">
+
+							<div style="margin-top: 10px">Слои</div>
+							<div style="position:relative;margin-left: 10px;margin-top: 10px;margin-right: 10px;font-size: 14px">
+								<div style="margin-top: 10px"
+								     cdkDropList
+								     class="layer-list"
+								     (cdkDropListDropped)="dropLayer($event)">
+									<div (click)="selectLayer(layer)"
+									     (dblclick)="showRightPanel(rightPanel)"
+									     [ngClass]="{'layer-box-active':layer.selected, 'layer-box-locked':layer.locked}"
+									     class="layer-box"
+									     *ngFor="let layer of templateInfo.objects"
+									     cdkDrag>Слой: {{layer.ID}} {{layer.layerName}}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</mat-tab>
+
+				<mat-tab [disabled]="!isSelectedTemplate()">
+					<ng-template mat-tab-label>
+						<mat-icon class="example-tab-icon">settings_input_component</mat-icon>
+					</ng-template>
+
+					<div class="tab-content" style="margin-top: 20px;">
+						<div>Модификаторы</div>
+
+						<div style="margin-left: 10px;margin-top: 20px;margin-right: 10px;font-size: 14px">
+							<div *ngFor="let modifier of modifiersList | keyvalue">
+								<mat-form-field  floatLabel="always" style="width: 100%;"
+								                 class="input">
+									<input type="text"
+									       (blur)="refreshModifiersByUserEdit($event, modifierInput.invalid, modifier.value)"
+									       (keydown)="inputModifiersEnterPress($event, modifierInput.invalid, modifier.value)"
+									       [disabled]="!isSelectedTemplate()"
+									       autocomplete="off"
+									       #modifierInput="ngModel"
+									       pattern="(^|\s|-)\d*\.?\d+\s*"
+									       [(ngModel)]="modifier.value.valueTmp" matInput
+									       [placeholder]="modifier.value.name">
+								</mat-form-field>
+							</div>
+						</div>
+					</div>
+				</mat-tab>
+
+				<mat-tab [disabled]="!isSelectedTemplate()">
+					<ng-template mat-tab-label>
+						<mat-icon class="example-tab-icon">list</mat-icon>
+					</ng-template>
+
+					<div class="tab-content" style="margin-top: 20px;">
+
+						<div *ngIf="!isSelectedTemplate()">Выберите шаблон</div>
+
+
+						<div *ngIf="isSelectedTemplate()">
+
+							<div>Записи</div>
+
+							<div style="margin-left: 10px;margin-top: 20px;margin-right: 10px;font-size: 14px">
+
+								<div style="margin-top: 10px" class="layer-list">
+									<div (click)="setRecord(record); selectedRecord = record.IDRECORD"
+									     [ngClass]="{'layer-box-active':selectedRecord == record.IDRECORD}"
+									     class="layer-box"
+									     *ngFor="let record of templateRecordsList">запись: {{record.IDRECORD}} </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</mat-tab>
+
+			</mat-tab-group>
+		</div>
+
+	</mat-drawer>
+	<div  style="width: 100%;height: 100%" fxLayout="row" fxLayoutAlign="center center">
+
+		<div class="center-side"  fxLayout="column" fxLayoutAlign="start start">
+
+			<div class="top-center" style="width: 100%">
+				<div style="margin-left: 40px;margin-right: 40px;"  fxLayout="row" fxLayoutAlign="space-between start">
+
+					<div style="font-size: 11px;">{{templateInfo.name}}</div>
+					<div fxLayout="row" fxLayoutAlign="space-between start">
+						<div #libraryOpenButton (click)="openLibrary($event)" matRipple
+						     class="library-show-button"></div>
+						<div style="margin-left: 15px;" (click)="leftPanel.toggle();" matRipple
+						     [ngClass]="{'left-panel-show-button-active':leftPanel.opened}"
+						     class="left-panel-show-button"></div>
+
+						<div style="margin-left: 5px;" (click)="rightPanel.toggle();" matRipple
+						     [ngClass]="{'right-panel-show-button-active':rightPanel.opened}"
+						     class="right-panel-show-button"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="center-zone" style="margin-top: 10px;" fxLayout="row" fxLayoutAlign="start start">
+
+				<div style="width: 40px;" class="center-left-zone" fxLayout="column" fxLayoutAlign="start start">
+				</div>
+				<div #editZone (mousedown)="selectContainer.update()" style="position: relative" [ngClass]="{'ready-drop-edit-zone': collectionDragElementHitEditZone}" class="shadow back-second-color rounded-small " [ngStyle]="getEditZoneStyles()">
+					<dts-select-container
+							[(selectedItems)]="objectsSelected"
+							[disabled]="!enabledSelectObject"
+							(itemDeselected)="objectDeselectGroup($event)"
+							(select)="objectSelectGroup($event)"
+
+							class="edit-zone center-center-zone"
+							style="position: relative;width: 100%;height: 100%"
+							#selectContainer="dts-select-container">
+
+						<div #objectDraggable
+						     *ngFor="let object of templateInfo.objects"
+
+						     [dtsSelectItem] = "{
+						          o: object,
+						          e: objectDraggable
+						     }"
+
+						     (click)="selectObject(object)"
+						     (dblclick)="showRightPanel(rightPanel)"
+
+						     [ngResizable]="!object.locked"
+						     ngResizable
+						     rzHandles="all"
+
+						     (rzStart)    = "appEasyFlipResize.easyFlipStartResize($event)"
+						     (rzResizing) = "appEasyFlipResize.easyFlipResize($event)"
+						     (rzStop)     = "appEasyFlipResize.easyFlipResizeEnd($event)"
+
+
+						     #appEasyFlipResize        = "appEasyFlipResize"
+						     [appEasyFlipResize]       = "object.flipObjectsResizeEnabledGlobal ? flipObjectsResizeEnabled : object.flipObjectsResizeEnabled"
+						     (easyFlipEnd)             = "updateConstraintsSizeObjectProcess(object, $event)"
+						     [easyFlipVLineStyle]      = "verticalEditLineStyles"
+						     [easyFlipHLineStyle]      = "horizontalEditLineStyles"
+						     [easyFlipForce]           = "object.flipObjectsResizeEnabledGlobal ? flipObjectsResizeForce   : object.flipObjectsResizeForce"
+						     [easyFlipObjectsToFlip]   = "templateInfo.objects"
+						     [easyFlipSelfObjectID]    = "object.ID"
+						     [easyFlipWidthEditZone]   = "widthEditZone"
+						     [easyFlipHeightEditZone]  = "heightEditZOne"
+
+						     [appEasyDrag]             = "!object.locked"
+						     (easyDragPressDown)       = "easyDragPressDown(object)"
+						     (easyDragPressUp)         = "easyDragPressUp()"
+						     (easyDragStopMoved)       = "updateConstraintsPositionObject($event)"
+						     [easyDragObjectsSelected] = "objectsSelected"
+						     [easyDragForceFlip]       = "object.flipObjectsEnabledGlobal ? flipObjectsForce   : object.flipObjectsForce"
+						     [easyDragFlipEnabled]     = "object.flipObjectsEnabledGlobal ? flipObjectsEnabled : object.flipObjectsEnabled"
+						     [easyDragVLineStyle]      = "verticalEditLineStyles"
+						     [easyDragHLineStyle]      = "horizontalEditLineStyles"
+						     [easyDragLockAxis]        = "object.lockAxisGlobal ? globalLockAxis : object.lockAxis"
+						     [easyDragSelfObject]      = "object"
+						     [easyDragWidthEditZone]   = "widthEditZone"
+						     [easyDragHeightEditZone]  = "heightEditZOne"
+						     [easyDragDeltaToDrag]     = "object.deltaToDragGlobal ? deltaToDrag : object.deltaToDrag"
+						     [easyDragObjectsForFlip]  = "templateInfo.objects"
+
+						     class="box object-in-edit-zone back-first-color"
+						     [ngClass]="{'box-selected':object.selected, 'locked-box': object.locked}"
+						     [ngStyle]="object.formattedStyles">
+							<div *ngIf="recordInfo && recordInfo[object.keyRecord]">
+								<div *ngIf="object.objectType === 'HF'">
+									{{recordInfo[object.keyRecord].value}}
+								</div>
+								<div *ngIf="object.objectType === 'TF'">
+									{{recordInfo[object.keyRecord].value}}
+								</div>
+								<div *ngIf="object.objectType === 'DF'">
+									{{recordInfo[object.keyRecord].value}}
+								</div>
+								<div *ngIf="object.objectType === 'DF'">
+									{{recordInfo[object.keyRecord].value}}
+								</div>
+							</div>
+						</div>
+					</dts-select-container>
+
+					<div class="vertical-line-straighten"   [ngStyle]="getVerticalLineConstraints()"></div>
+					<div class="horizontal-line-straighten" [ngStyle]="getHorizontalLineConstraints()"></div>
+				</div>
+				<div class="center-right-zone" style="width: 40px;">
+
+				</div>
+			</div>
+
+		</div>
+	</div>
+</mat-drawer-container>
+
+
+
+
